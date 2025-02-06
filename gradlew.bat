@@ -5,6 +5,11 @@
 @rem
 @rem ##########################################################################
 
+@rem Guardar JAVA_HOME original y establecer temporal
+set OLD_JAVA_HOME=%JAVA_HOME%
+@rem Forzar el uso de Java 8
+set JAVA_HOME=C:\Program Files\Amazon Corretto\jdk1.8.0_442
+
 @rem Set local scope for the variables with windows NT shell
 if "%OS%"=="Windows_NT" setlocal
 
@@ -80,5 +85,8 @@ exit /b 1
 
 :mainEnd
 if "%OS%"=="Windows_NT" endlocal
+
+@rem Restaurar JAVA_HOME original
+set JAVA_HOME=%OLD_JAVA_HOME%
 
 :omega
