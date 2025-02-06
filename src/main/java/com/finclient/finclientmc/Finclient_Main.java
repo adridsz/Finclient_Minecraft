@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package com.finclient.finclientmc;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
@@ -21,8 +21,8 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import java.util.Random;
 
-@Mod("examplemod")
-public class ExampleMod {
+@Mod("finclient")
+public class Finclient_Main {
 
     // Instancia del cliente y generador aleatorio
     private static final Minecraft mc = Minecraft.getInstance();
@@ -37,13 +37,13 @@ public class ExampleMod {
 
     // Tecla para activar/desactivar el mod (R por defecto)
     private static final KeyBinding TOGGLE_KEY = new KeyBinding(
-            "key.examplemod.toggle",
+            "key.finclient.toggle",
             InputMappings.Type.KEYSYM,
             GLFW.GLFW_KEY_R,
-            "category.examplemod"
+            "category.finclient"
     );
 
-    public ExampleMod() {
+    public Finclient_Main() {
         MinecraftForge.EVENT_BUS.register(this);
         ClientRegistry.registerKeyBinding(TOGGLE_KEY);
     }
