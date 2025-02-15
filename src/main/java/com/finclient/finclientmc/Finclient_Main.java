@@ -46,6 +46,7 @@ public class Finclient_Main {
     public Finclient_Main() {
         MinecraftForge.EVENT_BUS.register(this);
         ClientRegistry.registerKeyBinding(TOGGLE_KEY);
+        WallhackRenderer.register();
     }
 
     // Renderiza un pequeño HUD indicando que el killaura está activado
@@ -117,7 +118,7 @@ public class Finclient_Main {
 
     // Calcula un retardo aleatorio entre ataques basado en el CPS (Clicks Por Segundo)
     private static int getRandomAttackDelay() {
-        int minCPS = 8;
+        int minCPS = 12;
         int maxCPS = 15;
         int cps = minCPS + random.nextInt(maxCPS - minCPS + 1);
         return Math.max(1, 20 / cps);
