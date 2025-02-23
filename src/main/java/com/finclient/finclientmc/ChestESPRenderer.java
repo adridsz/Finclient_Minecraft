@@ -16,8 +16,8 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class ChestESPRenderer {
-
     private static final Minecraft mc = Minecraft.getInstance();
+    private static boolean enabled = true;  // You can add a toggle if desired
 
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
@@ -25,78 +25,122 @@ public class ChestESPRenderer {
         if (mc.world == null || mc.player == null)
             return;
 
+        // Get player's view position
         double renderPosX = mc.getRenderManager().info.getProjectedView().x;
         double renderPosY = mc.getRenderManager().info.getProjectedView().y;
         double renderPosZ = mc.getRenderManager().info.getProjectedView().z;
 
+        // Save current render states
         GlStateManager.pushMatrix();
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        
+        // Disable depth testing to see through walls
+        GlStateManager.disableDepthTest();
+        GlStateManager.disableTexture();
+        GlStateManager.disableLighting();
+        
+        // Enable blend for transparency
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        
         GL11.glLineWidth(2.0F);
 
         for (TileEntity te : mc.world.loadedTileEntityList) {
             if (te instanceof ChestTileEntity) {
                 BlockPos pos = te.getPos();
-                // Use a bounding box from the block's minimum to maximum corner
-                AxisAlignedBB bb = new AxisAlignedBB(pos, pos.add(1, 1, 1));
-                GlStateManager.pushMatrix();
-                // Translate the bounding box to render space
-                GlStateManager.translated(bb.minX - renderPosX, bb.minY - renderPosY, bb.minZ - renderPosZ);
+                AxisAlignedBB bb = new AxisAlignedBB(pos).offset(-renderPosX, -renderPosY, -renderPosZ);
+                
+                // Draw green outline
+                GlStateManager.color4f(0.0F, 1.0F, 0.0F, 1.0F);
                 drawBoundingBox(bb);
-                GlStateManager.popMatrix();
+                
+                // Draw semi-transparent fill
+                GlStateManager.color4f(0.0F, 1.0F, 0.0F, 0.2F);
+                drawFilledBox(bb);
             }
         }
 
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        // Restore render states
+        GlStateManager.enableTexture();
+        GlStateManager.enableDepthTest();
+        GlStateManager.enableLighting();
+        GlStateManager.disableBlend();
         GlStateManager.popMatrix();
     }
 
     private static void drawBoundingBox(AxisAlignedBB bb) {
         GL11.glBegin(GL11.GL_LINES);
-        // Draw in green.
-        GlStateManager.color4f(0.0F, 1.0F, 0.0F, 1.0F);
+        
+        // Bottom face
+        GL11.glVertex3d(bb.minX, bb.minY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.maxZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.minY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.minY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.minY, bb.minZ);
 
-        double xSize = bb.getXSize();
-        double ySize = bb.getYSize();
-        double zSize = bb.getZSize();
+        // Top face
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.maxZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.minZ);
 
-        // Bottom face.
-        GL11.glVertex3d(0, 0, 0);
-        GL11.glVertex3d(xSize, 0, 0);
+        // Connecting vertices
+        GL11.glVertex3d(bb.minX, bb.minY, bb.minZ);
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.maxZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.minY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.maxZ);
 
-        GL11.glVertex3d(xSize, 0, 0);
-        GL11.glVertex3d(xSize, 0, zSize);
+        GL11.glEnd();
+    }
 
-        GL11.glVertex3d(xSize, 0, zSize);
-        GL11.glVertex3d(0, 0, zSize);
+    private static void drawFilledBox(AxisAlignedBB bb) {
+        GL11.glBegin(GL11.GL_QUADS);
+        
+        // Bottom face
+        GL11.glVertex3d(bb.minX, bb.minY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.minY, bb.maxZ);
 
-        GL11.glVertex3d(0, 0, zSize);
-        GL11.glVertex3d(0, 0, 0);
+        // Top face
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.minZ);
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.maxZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.maxZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.minZ);
 
-        // Top face.
-        GL11.glVertex3d(0, ySize, 0);
-        GL11.glVertex3d(xSize, ySize, 0);
+        // Front face
+        GL11.glVertex3d(bb.minX, bb.minY, bb.maxZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.maxZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.maxZ);
 
-        GL11.glVertex3d(xSize, ySize, 0);
-        GL11.glVertex3d(xSize, ySize, zSize);
+        // Back face
+        GL11.glVertex3d(bb.minX, bb.minY, bb.minZ);
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.minZ);
 
-        GL11.glVertex3d(xSize, ySize, zSize);
-        GL11.glVertex3d(0, ySize, zSize);
+        // Left face
+        GL11.glVertex3d(bb.minX, bb.minY, bb.minZ);
+        GL11.glVertex3d(bb.minX, bb.minY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.maxZ);
+        GL11.glVertex3d(bb.minX, bb.maxY, bb.minZ);
 
-        GL11.glVertex3d(0, ySize, zSize);
-        GL11.glVertex3d(0, ySize, 0);
-
-        // Vertical edges.
-        GL11.glVertex3d(0, 0, 0);
-        GL11.glVertex3d(0, ySize, 0);
-
-        GL11.glVertex3d(xSize, 0, 0);
-        GL11.glVertex3d(xSize, ySize, 0);
-
-        GL11.glVertex3d(xSize, 0, zSize);
-        GL11.glVertex3d(xSize, ySize, zSize);
-
-        GL11.glVertex3d(0, 0, zSize);
-        GL11.glVertex3d(0, ySize, zSize);
+        // Right face
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.minZ);
+        GL11.glVertex3d(bb.maxX, bb.maxY, bb.maxZ);
+        GL11.glVertex3d(bb.maxX, bb.minY, bb.maxZ);
 
         GL11.glEnd();
     }
