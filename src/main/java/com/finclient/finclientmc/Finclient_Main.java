@@ -47,6 +47,7 @@ public class Finclient_Main {
         MinecraftForge.EVENT_BUS.register(this);
         ClientRegistry.registerKeyBinding(TOGGLE_KEY);
         WallhackRenderer.register();
+        ChestESPRenderer.register();
     }
 
     // Renderiza un pequeño HUD indicando que el killaura está activado
